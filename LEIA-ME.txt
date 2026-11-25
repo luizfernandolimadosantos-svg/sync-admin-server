@@ -1,0 +1,61 @@
+SYNC ADMIN — PACOTE NETLIFY
+
+ESTRUTURA
+- index.html: painel administrativo
+- netlify/functions/api.mjs: API serverless
+- netlify.toml: rotas, função e cabeçalhos de segurança
+- package.json: dependência Netlify Blobs
+
+CONFIGURAÇÃO OBRIGATÓRIA NO NETLIFY
+Configure estas variáveis antes de usar o painel:
+
+1. SYNC_ADMIN_PASSWORD
+   Defina a senha escolhida para entrar no painel. O backend não exige que ela tenha
+   32 caracteres; aceita a senha configurada. Ela não está gravada nos arquivos.
+
+2. SYNC_SESSION_SECRET
+   É uma chave técnica separada da senha do painel. Gere uma chave aleatória forte
+   com pelo menos 32 bytes e guarde como segredo. Se o login mostrar “configuração
+   do Netlify não chegou à função”, confirme que as duas variáveis estão no projeto
+   correto, disponíveis para Functions e aplicadas com um novo deploy. Exemplo Node.js:
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+DEPLOY
+Este pacote usa uma função Netlify e Netlify Blobs; não é apenas uma página estática.
+Faça deploy pelo Git ou Netlify CLI para instalar as dependências e publicar a função.
+O ZIP contém os arquivos para deploy, mas não publica o site por conta própria.
+
+PAINEL
+- Autorizações por PIN temporário de 6 dígitos, com expiração.
+- Aba Distribuição: publique um .exe Windows pequeno (até 4 MiB) ou informe uma URL
+  HTTPS direta e o SHA-256 para arquivos maiores. O botão de download é manual.
+- Aba Detecções: mantenha até 100 regras por nome exato e SHA-256. As regras são
+  declarativas, não executam código e só são aplicadas pelo File Lab ao arquivo que
+  o operador selecionar manualmente.
+- Aba Aparência: escolha uma das paletas disponíveis e uma mensagem de até 100
+  caracteres. A configuração é consultada pelo scanner durante uma sessão aprovada.
+- Dispositivos e resultados: acompanhe sessões e resumos enviados com confirmação
+  explícita no scanner.
+
+INTEGRAÇÃO DO SCANNER
+Use junto deste pacote o main.cpp atualizado entregue separadamente. Ele pede
+consentimento visível, solicita o PIN, aguarda a aprovação do administrador e deixa
+o envio do resumo para uma ação separada do operador. Ele não deve ser executado
+ocultamente nem coleta resultados antes de uma sessão autorizada.
+
+Se o Netlify publicar o site em um endereço diferente do configurado no main.cpp,
+atualize a constante base no namespace syncLive e recompile o scanner.
+
+ROTAS USADAS PELO SCANNER
+- POST /api/request: solicita PIN após consentimento local.
+- POST /api/status: consulta o estado da sessão e as configurações visuais.
+- POST /api/scanner-rules: recebe regras depois da aprovação.
+- POST /api/report: envia o resumo depois de aprovação e consentimento local.
+- GET /api/release-info: consulta metadados da versão publicada.
+- GET /api/release-download: download manual da versão publicada.
+
+O relatório aceita um resumo estruturado com verdict (clean, suspicious ou detected),
+findings (category, rule e severity) e counts. Não envie arquivos completos,
+caminhos pessoais, conteúdo bruto, histórico de navegador ou dados de contas.
+O painel usa cookie HttpOnly e exige HTTPS. Os dados são guardados em Netlify Blobs.
+Revise as regras de retenção do seu site antes de usar com outras pessoas.
